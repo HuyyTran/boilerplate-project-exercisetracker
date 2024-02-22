@@ -20,7 +20,6 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/views/index.html");
 });
 
-
 // create a 'User' Model
 const Schema = mongoose.Schema;
 const userSchema = new Schema({
@@ -29,10 +28,17 @@ const userSchema = new Schema({
   duration: Number,
   date: Date,
 });
+let User = mongoose.model("User", userSchema);
 
-
-app.post('/api/users', (req, res) => {
-
+app.post("/api/users", (req, res) => {
+  let username = req.body.username;
+  var newUser = new User({
+    name: username,
+  });
+  newUser.save().catch((err) => {
+    if (err) return console.error(err);
+  });
+  res.json({ username: username,_id: newUser._id.toString() });
 });
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log("Your app is listening on port " + listener.address().port);
