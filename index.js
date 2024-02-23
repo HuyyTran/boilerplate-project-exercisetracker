@@ -32,7 +32,8 @@ let Exercise = mongoose.model("Exercise", exerciseSchema);
 // create a 'User' Model
 const userSchema = new Schema({
   username: { type: String, required: true },
-  log: [exerciseSchema],
+  count:Number,
+  log: [exerciseSchema]  
 });
 let User = mongoose.model("User", userSchema);
 
@@ -82,16 +83,17 @@ app.post(
     let date = req.body.date;
     console.log(id, description, duration, date);
 
+    if (date == "") {
+      date = new Date().toISOString().substring(0, 10);
+    }
+
     console.log("after modify: ", id, description, duration, date);
     let newExercise = new Exercise({
       description: req.body.description,
       duration: parseInt(req.body.duration),
-      date: req.body.date,
+      date: new Date(date).toDateString()
     });
 
-    if (newExercise.date == "") {
-      newExercise.date = new Date().toISOString().substring(0, 10);
-    }
     User.findByIdAndUpdate(
       id,
       {
@@ -103,7 +105,7 @@ app.post(
         let resObject = {};
         resObject["_id"] = updatedUser.id;
         resObject["username"] = updatedUser.username;
-        resObject["date"] = new Date(newExercise.date).toDateString();
+        resObject["date"] = new Date(date).toDateString();
         resObject["duration"] = newExercise.duration;
         resObject["description"] = newExercise.description;
         res.json(resObject);
@@ -113,6 +115,20 @@ app.post(
       });
   }
 );
+
+// handler of log
+app.get("/api/users/:_id/logs", (req, res) => {
+  let id = req.params._id;
+  User.findById(id)
+    .then((result) => {
+      result["count"]=result.log.length;
+      res.json(result);
+    })
+    .catch((err) => {
+      if (err) return console.error(err);
+    });
+});
+
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log("Your app is listening on port " + listener.address().port);
 });
